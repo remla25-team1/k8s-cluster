@@ -39,6 +39,7 @@
         state: present
         update_cache: yes
 
+    # Step 5: Disable SWAP
     - name: Disable swap
       shell: swapoff -a
 
