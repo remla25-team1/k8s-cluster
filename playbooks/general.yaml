@@ -47,3 +47,53 @@
         path: /etc/fstab
         regexp: '^(.*swap.*)$'
         replace: '# \1'
+    
+    - name: Load kernel modules
+      modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - br_netfilter
+        - overlay
+    
+    - name: Persist kernel modules
+      copy:
+        content: |
+          br_netfilter
+          overlay
+        dest: /etc/modules-load.d/k8s.conf
+        mode: 0644
+
+    # Step 7: Enable IPv4 forwarding
+    - name: Set bridge-nf-call-iptables
+      sysctl:
+        name: net.bridge.bridge-nf-call-iptables
+        value: '1'
+        state: present
+        reload: yes
+
+    - name: Set bridge-nf-call-ip6tables
+      sysctl:
+        name: net.bridge.bridge-nf-call-ip6tables
+        value: '1'
+        state: present
+        reload: yes
+    
+    - name: Enable IP forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+        reload: yes
+
+    - name: Install containerd
+      apt:
+        name: containerd
+        state: present
+        update_cache: yes
+
+    - name: Enable containerd service
+      systemd:
+        name: containerd
+        enabled: yes
+        state: started
